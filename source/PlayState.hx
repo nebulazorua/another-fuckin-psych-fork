@@ -84,6 +84,10 @@ using StringTools;
 
 class PlayState extends MusicBeatState
 {
+	var useChordGhosts:Bool = true; // when true, the 'chord ghosts' appear
+	// aka, when you press a jump/hand/quad (double/triple/quad), it'll show both notes in the chord
+	// but as ghosts/afterimages
+	
 	var noteRows:Array<Array<Array<Note>>> = [[],[],[]];
 
 	public static var STRUM_X = 42;
@@ -4201,6 +4205,8 @@ class PlayState extends MusicBeatState
 		missTrack.volume = daVoxVol;
 		if(!practiceMode) songScore -= 10;
 
+		if(!daNote.isSustainNote)FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.8, 1) * ClientPrefs.missVolume);
+
 		totalPlayed++;
 		RecalculateRating(true);
 
@@ -4245,7 +4251,7 @@ class PlayState extends MusicBeatState
 			totalPlayed++;
 			RecalculateRating(true);
 
-			FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.1, 0.2));
+			FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.8, 1) * ClientPrefs.missVolume);
 			// FlxG.sound.play(Paths.sound('missnote1'), 1, false);
 			// FlxG.log.add('played imss note');
 
@@ -4296,8 +4302,7 @@ class PlayState extends MusicBeatState
 			{
 				char.holdTimer = 0;
 
-				// TODO: maybe move this all away into a seperate function
-				if (!note.isSustainNote
+				if (useChordGhosts && !note.isSustainNote
 					&& noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row] != null
 					&& noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row].length > 1)
 				{
@@ -4358,13 +4363,8 @@ class PlayState extends MusicBeatState
 			if(cpuControlled && (note.ignoreNote || note.hitCausesMiss)) return;
 
 			if (ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled)
-			{
-				if(note.noteType == 'Red Ring')
-					FlxG.sound.play(Paths.sound('red_ring'), 0.35);
-				else
-					FlxG.sound.play(Paths.sound('hitsound'), ClientPrefs.hitsoundVolume);
-			}else if(note.noteType == 'Red Ring')
-				FlxG.sound.play(Paths.sound('red_ring'), 0.35);
+				FlxG.sound.play(Paths.sound('hitsound'), ClientPrefs.hitsoundVolume);
+			
 
 			switch(note.noteType) {
 				default:
@@ -4398,7 +4398,7 @@ class PlayState extends MusicBeatState
 				return;
 			}
 
-			if (!note.isSustainNote && note.noteType != 'Red Ring' && note.noteType != 'Monitor Norm' && note.noteType != 'Monitor Exe')
+			if (!note.isSustainNote)
 			{
 				combo += 1;
 				if(combo > 9999) combo = 9999;
@@ -4419,7 +4419,7 @@ class PlayState extends MusicBeatState
 
 				char.holdTimer = 0;
 				
-				if (!note.isSustainNote && noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row]!=null && noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row].length > 1)
+				if (useChordGhosts && !note.isSustainNote && noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row]!=null && noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row].length > 1)
 				{
 					// potentially have jump anims?
 					var chord = noteRows[note.gfNote ? 2 : note.mustPress ? 0 : 1][note.row];
