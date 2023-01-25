@@ -222,6 +222,13 @@ class Paths
 		return file;
 	}
 
+	inline static public function missTrack(song:String):Any
+	{
+		var songKey:String = '${formatToSongPath(song)}/MissVoices';
+		var voices = returnSound('songs', songKey);
+		return voices;
+	}
+
 	inline static public function voices(song:String):Any
 	{
 		var songKey:String = '${formatToSongPath(song)}/Voices';

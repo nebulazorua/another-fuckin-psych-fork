@@ -158,6 +158,8 @@ class PlayState extends MusicBeatState
 
 	public var inst:FlxSound;
 	public var vocals:FlxSound;
+	public var missTrack:FlxSound;
+	var hasMissTrack:Bool = false;
 
 	public var dad:Character = null;
 	public var gf:Character = null;
@@ -301,12 +303,9 @@ class PlayState extends MusicBeatState
 	public static var lastCombo:FlxSprite;
 	// stores the last combo score objects in an array
 	public static var lastScore:Array<FlxSprite> = [];
-
-
 	var daVoxVol:Float = 1;
 
 	public var beatsPerZoom:Int = 4;
-
 
 	override public function create()
 	{
@@ -2083,17 +2082,27 @@ class PlayState extends MusicBeatState
 		Conductor.changeBPM(songData.bpm);
 
 		curSong = songData.song;
-		if (SONG.needsVoices)
+		if (SONG.needsVoices){
 			vocals = new FlxSound().loadEmbedded(Paths.voices(PlayState.SONG.song));
-		else
+			hasMissTrack = FileSystem.exists('songs/${Paths.formatToSongPath(PlayState.SONG.song)}/MissVoices.${Paths.SOUND_EXT}');
+		}else
 			vocals = new FlxSound();
+		
 
+		if(hasMissTrack){
+			missTrack = new FlxSound().loadEmbedded(Paths.missTrack(PlayState.SONG.song));
+			missTrack.volume = 0;
+		}else
+			missTrack = new FlxSound();
+		
+		missTrack.pitch = playbackRate;
 		vocals.pitch = playbackRate;
 
 		inst = new FlxSound().loadEmbedded(Paths.inst(PlayState.SONG.song));
 		inst.pitch = playbackRate;
 
 		FlxG.sound.list.add(vocals);
+		FlxG.sound.list.add(missTrack);
 		FlxG.sound.list.add(inst);
 
 		notes = new FlxTypedGroup<Note>();
@@ -3631,6 +3640,8 @@ class PlayState extends MusicBeatState
 
 		inst.volume = 0;
 		vocals.volume = 0;
+		missTrack.volume = 0;
+		missTrack.pause();
 		vocals.pause();
 
 		
@@ -3865,6 +3876,7 @@ class PlayState extends MusicBeatState
 
 		// boyfriend.playAnim('hey');
 		vocals.volume = daVoxVol;
+		missTrack.volume = 0;
 
 		var placement:String = Std.string(combo);
 
@@ -4275,6 +4287,7 @@ class PlayState extends MusicBeatState
 		if(instakillOnMiss)
 		{
 			vocals.volume = 0;
+			missTrack.volume = 0;
 			
 			doDeathCheck(true);
 		}
@@ -4283,6 +4296,7 @@ class PlayState extends MusicBeatState
 		//trace(daNote.missHealth);
 		songMisses++;
 		vocals.volume = 0;
+		missTrack.volume = daVoxVol;
 		if(!practiceMode) songScore -= 10;
 
 		totalPlayed++;
@@ -4312,6 +4326,7 @@ class PlayState extends MusicBeatState
 			if(instakillOnMiss)
 			{
 				vocals.volume = 0;
+				missTrack.volume = 0;
 				doDeathCheck(true);
 			}
 
@@ -4343,6 +4358,7 @@ class PlayState extends MusicBeatState
 			if(boyfriend.hasMissAnimations) {
 				boyfriend.playAnim(singAnimations[Std.int(Math.abs(direction))] + 'miss', true);
 			}
+			missTrack.volume = daVoxVol;
 			vocals.volume = 0;
 		}
 		callOnLuas('noteMissPress', [direction]);
@@ -4399,8 +4415,10 @@ class PlayState extends MusicBeatState
 					char.playAnim(animToPlay, true);
 			}
 		}
-		if (SONG.needsVoices)
-			vocals.volume = daVoxVol;
+		if (SONG.needsVoices){
+			if(!hasMissTrack)
+				vocals.volume = daVoxVol;
+		}
 
 
 		var time:Float = 0.15;
@@ -4546,6 +4564,7 @@ class PlayState extends MusicBeatState
 			}
 			note.wasGoodHit = true;
 			vocals.volume = daVoxVol;
+			missTrack.volume = 0;
 			
 			var isSus:Bool = note.isSustainNote; //GET OUT OF MY HEAD, GET OUT OF MY HEAD, GET OUT OF MY HEAD
 			var leData:Int = Math.round(Math.abs(note.noteData));
