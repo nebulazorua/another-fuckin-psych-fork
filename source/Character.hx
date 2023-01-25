@@ -1,5 +1,6 @@
 package;
 
+import flixel.tweens.FlxEase;
 import animateatlas.AtlasFrameMaker;
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -46,6 +47,13 @@ typedef AnimArray = {
 
 class Character extends FlxSprite
 {
+	public var mostRecentRow:Int = 0; // for ghost anims n shit
+	public var animGhosts:Array<FlxSprite> = [];
+	public var ghostIdx:Int = 0;
+	public var ghostAnim:String = '';
+	public var ghostTweens:Array<FlxTween> = [];
+
+	public var anims:Array<String> = [];
 	public var animOffsets:Map<String, Array<Dynamic>>;
 	public var debugMode:Bool = false;
 
@@ -82,6 +90,16 @@ class Character extends FlxSprite
 	public function new(x:Float, y:Float, ?character:String = 'bf', ?isPlayer:Bool = false)
 	{
 		super(x, y);
+
+		for (i in 0...4)
+		{
+			var ghost = new FlxSprite();
+			ghost.visible = false;
+			ghost.antialiasing = true;
+			ghost.alpha = 0.6;
+			animGhosts.push(ghost);
+		}
+
 
 		#if (haxe >= "4.0.0")
 		animOffsets = new Map();
@@ -205,12 +223,14 @@ class Character extends FlxSprite
 							animation.addByPrefix(animAnim, animName, animFps, animLoop);
 						}
 
+						anims.push(animAnim);
 						if(anim.offsets != null && anim.offsets.length > 1) {
 							addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 						}
 					}
 				} else {
 					quickAnimAdd('idle', 'BF idle dance');
+					anims.push('idle');
 				}
 				//trace('Loaded file to character ' + curCharacter);
 		}
@@ -310,6 +330,8 @@ class Character extends FlxSprite
 				playAnim(animation.curAnim.name + '-loop');
 			}
 		}
+		for (ghost in animGhosts)
+			ghost.update(elapsed);
 		super.update(elapsed);
 	}
 
@@ -337,8 +359,54 @@ class Character extends FlxSprite
 		}
 	}
 
+	override function draw()
+	{
+		for (ghost in animGhosts)
+		{
+			if (ghost.visible)
+				ghost.draw();
+		}
+
+		super.draw();
+	}
+
+	public function playGhostAnim(GhostIdx = 0, AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0)
+	{
+		var ghost = animGhosts[GhostIdx];
+		ghost.scale.copyFrom(scale);
+		ghost.updateHitbox();
+		ghost.frames = frames;
+		ghost.animation.copyFrom(animation);
+		ghost.x = x;
+		ghost.y = y;
+		ghost.flipX = flipX;
+		ghost.flipY = flipY;
+		ghost.alpha = alpha * 0.6;
+		ghost.visible = true;
+		ghost.animation.play(AnimName, Force, Reversed, Frame);
+		if (ghostTweens[GhostIdx] != null)
+			ghostTweens[GhostIdx].cancel();
+
+		ghostTweens[GhostIdx] = FlxTween.tween(ghost, {alpha: 0}, 0.75, {
+			ease: FlxEase.linear,
+			onComplete: function(twn:FlxTween)
+			{
+				ghost.visible = false;
+				ghostTweens[GhostIdx] = null;
+			}
+		});
+
+		var daOffset = animOffsets.get(AnimName);
+		if (animOffsets.exists(AnimName))
+			ghost.offset.set(daOffset[0], daOffset[1]);
+		else
+			ghost.offset.set(0, 0);
+	}
+	
 	public function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
 	{
+		if (!anims.contains(AnimName))return;
+
 		specialAnim = false;
 		animation.play(AnimName, Force, Reversed, Frame);
 

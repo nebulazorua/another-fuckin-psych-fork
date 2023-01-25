@@ -174,7 +174,7 @@ class Paths
 
 	inline static public function json(key:String, ?library:String)
 	{
-		return getPath('data/$key.json', TEXT, library);
+		return getPath('songs/$key.json', TEXT, library);
 	}
 
 	inline static public function shaderFragment(key:String, ?library:String)
@@ -188,6 +188,10 @@ class Paths
 	inline static public function lua(key:String, ?library:String)
 	{
 		return getPath('$key.lua', TEXT, library);
+	}
+
+	inline public static function hs(key:String,?library:String){
+		return getPath('$key.hx', TEXT, library);
 	}
 
 	static public function video(key:String)
@@ -220,24 +224,16 @@ class Paths
 
 	inline static public function voices(song:String):Any
 	{
-		#if html5
-		return 'songs:assets/songs/${formatToSongPath(song)}/Voices.$SOUND_EXT';
-		#else
 		var songKey:String = '${formatToSongPath(song)}/Voices';
 		var voices = returnSound('songs', songKey);
 		return voices;
-		#end
 	}
 
 	inline static public function inst(song:String):Any
 	{
-		#if html5
-		return 'songs:assets/songs/${formatToSongPath(song)}/Inst.$SOUND_EXT';
-		#else
 		var songKey:String = '${formatToSongPath(song)}/Inst';
 		var inst = returnSound('songs', songKey);
 		return inst;
-		#end
 	}
 
 	inline static public function image(key:String, ?library:String):FlxGraphic

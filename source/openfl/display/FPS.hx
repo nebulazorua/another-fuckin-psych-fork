@@ -12,7 +12,7 @@ import openfl.display._internal.stats.DrawCallContext;
 #if flash
 import openfl.Lib;
 #end
-
+import flixel.FlxG;
 #if openfl
 import openfl.system.System;
 #end
@@ -64,6 +64,7 @@ class FPS extends TextField
 		#end
 	}
 
+	var repeat:Int = 0;
 	// Event Handlers
 	@:noCompletion
 	private #if !flash override #end function __enterFrame(deltaTime:Float):Void
@@ -78,6 +79,7 @@ class FPS extends TextField
 
 		var currentCount = times.length;
 		currentFPS = Math.round((currentCount + cacheCount) / 2);
+		
 		if (currentFPS > ClientPrefs.framerate) currentFPS = ClientPrefs.framerate;
 
 		if (currentCount != cacheCount /*&& visible*/)

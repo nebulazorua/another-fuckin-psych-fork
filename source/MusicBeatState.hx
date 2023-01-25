@@ -66,7 +66,7 @@ class MusicBeatState extends FlxUIState
 		}
 
 		if(FlxG.save.data != null) FlxG.save.data.fullscreen = FlxG.fullscreen;
-
+		Conductor.update(elapsed); // updates timers, etc
 		super.update(elapsed);
 	}
 

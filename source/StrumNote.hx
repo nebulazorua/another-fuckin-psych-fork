@@ -46,12 +46,15 @@ class StrumNote extends FlxSprite
 		var lastAnim:String = null;
 		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
 
+		var dir = '';
+		if (PlayState.isPixelStage && (PlayState.SONG.arrowSkin == null || PlayState.SONG.arrowSkin.length == 0))dir = 'pixelUI/';
+		
 		if(PlayState.isPixelStage)
 		{
-			loadGraphic(Paths.image('pixelUI/' + texture));
+			loadGraphic(Paths.image(dir + texture));
 			width = width / 4;
 			height = height / 5;
-			loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+			loadGraphic(Paths.image(dir + texture), true, Math.floor(width), Math.floor(height));
 
 			antialiasing = false;
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -135,10 +138,10 @@ class StrumNote extends FlxSprite
 				resetAnim = 0;
 			}
 		}
-		//if(animation.curAnim != null){ //my bad i was upset
-		if(animation.curAnim.name == 'confirm' && !PlayState.isPixelStage) {
-			centerOrigin();
-		//}
+		if(animation.curAnim != null){ //my bad i was upset
+			if(animation.curAnim.name == 'confirm' && !PlayState.isPixelStage) {
+				centerOrigin();
+			}
 		}
 
 		super.update(elapsed);

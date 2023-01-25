@@ -37,7 +37,7 @@ class MusicBeatSubstate extends FlxSubState
 		if (oldStep != curStep && curStep > 0)
 			stepHit();
 
-
+		Conductor.update(elapsed); // updates timers, etc
 		super.update(elapsed);
 	}
 

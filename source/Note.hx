@@ -19,6 +19,8 @@ typedef EventNote = {
 
 class Note extends FlxSprite
 {
+	public var row:Int = 0;
+	
 	public var extraData:Map<String,Dynamic> = [];
 
 	public var strumTime:Float = 0;
@@ -95,6 +97,10 @@ class Note extends FlxSprite
 
 	public var hitsoundDisabled:Bool = false;
 
+	public var evil:Bool = false;
+
+	public var hitbox:Float = Conductor.safeZoneOffset; // idk why psych doesnt have this by default
+
 	private function set_multSpeed(value:Float):Float {
 		resizeByRatio(value / multSpeed);
 		multSpeed = value;
@@ -155,9 +161,11 @@ class Note extends FlxSprite
 			}
 			noteType = value;
 		}
-		noteSplashHue = colorSwap.hue;
-		noteSplashSat = colorSwap.saturation;
-		noteSplashBrt = colorSwap.brightness;
+		if (colorSwap!=null){
+			noteSplashHue = colorSwap.hue;
+			noteSplashSat = colorSwap.saturation;
+			noteSplashBrt = colorSwap.brightness;
+		}
 		return value;
 	}
 
@@ -248,18 +256,24 @@ class Note extends FlxSprite
 	var lastNoteOffsetXForPixelAutoAdjusting:Float = 0;
 	var lastNoteScaleToo:Float = 1;
 	public var originalHeightForCalcs:Float = 6;
-	function reloadNote(?prefix:String = '', ?texture:String = '', ?suffix:String = '') {
+	function reloadNote(?prefix:String = '', ?texture:String = '', ?suffix:String = '', ?hasAnim:Bool=true, ?ignorePixelShit:Bool=false) {
 		if(prefix == null) prefix = '';
 		if(texture == null) texture = '';
 		if(suffix == null) suffix = '';
+		var dir:String = '';
+		if (PlayState.isPixelStage && !ignorePixelShit)dir='pixelUI/';
+
 
 		var skin:String = texture;
 		if(texture.length < 1) {
 			skin = PlayState.SONG.arrowSkin;
-			if(skin == null || skin.length < 1) {
+			if(skin == null || skin.length < 1) 
 				skin = 'NOTE_assets';
-			}
+			else
+				dir ='';
 		}
+
+		trace(skin, texture);
 
 		var animName:String = null;
 		if(animation.curAnim != null) {
@@ -273,19 +287,26 @@ class Note extends FlxSprite
 		var blahblah:String = arraySkin.join('/');
 		if(PlayState.isPixelStage) {
 			if(isSustainNote) {
-				loadGraphic(Paths.image('pixelUI/' + blahblah + 'ENDS'));
-				width = width / 4;
-				height = height / 2;
-				originalHeightForCalcs = height;
-				loadGraphic(Paths.image('pixelUI/' + blahblah + 'ENDS'), true, Math.floor(width), Math.floor(height));
+				loadGraphic(Paths.image(dir + blahblah + 'ENDS'));
+				if (hasAnim)
+				{
+					width = width / 4;
+					height = height / 2;
+					originalHeightForCalcs = height;
+					loadGraphic(Paths.image(dir + blahblah + 'ENDS'), true, Math.floor(width), Math.floor(height));
+				}
 			} else {
-				loadGraphic(Paths.image('pixelUI/' + blahblah));
-				width = width / 4;
-				height = height / 5;
-				loadGraphic(Paths.image('pixelUI/' + blahblah), true, Math.floor(width), Math.floor(height));
+				loadGraphic(Paths.image(dir + blahblah));
+				if (hasAnim)
+				{
+					width = width / 4;
+					height = height / 5;
+					loadGraphic(Paths.image(dir + blahblah), true, Math.floor(width), Math.floor(height));
+				}
 			}
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
-			loadPixelNoteAnims();
+			if (hasAnim)
+				loadPixelNoteAnims();
 			antialiasing = false;
 
 			if(isSustainNote) {
@@ -301,17 +322,22 @@ class Note extends FlxSprite
 				}*/
 			}
 		} else {
-			frames = Paths.getSparrowAtlas(blahblah);
-			loadNoteAnims();
+			if (hasAnim){
+				frames = Paths.getSparrowAtlas(blahblah);
+				loadNoteAnims();
+			}else
+				loadGraphic(Paths.image(blahblah));
+			
 			antialiasing = ClientPrefs.globalAntialiasing;
 		}
 		if(isSustainNote) {
 			scale.y = lastScaleY;
 		}
 		updateHitbox();
-
-		if(animName != null)
-			animation.play(animName, true);
+		if (hasAnim)
+			if(animName != null)
+				animation.play(animName, true);
+		
 
 		if(inEditor) {
 			setGraphicSize(ChartingState.GRID_SIZE, ChartingState.GRID_SIZE);
@@ -349,20 +375,20 @@ class Note extends FlxSprite
 		if (mustPress)
 		{
 			// ok river
-			if (strumTime > Conductor.songPosition - (Conductor.safeZoneOffset * lateHitMult)
-				&& strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * earlyHitMult))
+			if (strumTime > Conductor.songPosition - (hitbox * lateHitMult)
+				&& strumTime < Conductor.songPosition + (hitbox * earlyHitMult))
 				canBeHit = true;
 			else
 				canBeHit = false;
 
-			if (strumTime < Conductor.songPosition - Conductor.safeZoneOffset && !wasGoodHit)
+			if (strumTime < Conductor.songPosition - hitbox && !wasGoodHit)
 				tooLate = true;
 		}
 		else
 		{
 			canBeHit = false;
 
-			if (strumTime < Conductor.songPosition + (Conductor.safeZoneOffset * earlyHitMult))
+			if (strumTime < Conductor.songPosition + (hitbox * earlyHitMult))
 			{
 				if((isSustainNote && prevNote.wasGoodHit) || strumTime <= Conductor.songPosition)
 					wasGoodHit = true;
